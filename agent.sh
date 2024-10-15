@@ -10,8 +10,9 @@ fi
 # === Извлечение значений из config.json ===
 ORG_ID=$(grep -oP '(?<="id": ")[^"]*' $CONFIG_FILE)
 PASSWORD=$(grep -oP '(?<="password": ")[^"]*' $CONFIG_FILE)
+BINCODES=$(grep -oP '(?<="bincodes": \[)[^\]]*' $CONFIG_FILE | tr -d '"' | tr ',' ' ')
 
-# === Генерация случайного соли из 16 символов ===
+# === Генерация случайной соли из 16 символов ===
 ORG_SALT=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16)
 
 # === Распаковка файлов ===
@@ -55,5 +56,27 @@ sed -i \
   -e "s|<org-encryption.key secret>|$PASSWORD|g" \
   -e "s|<org secret salt>|$ORG_SALT|g" \
   "$PRIVATE_YAML"
+
+# === Переход в каталог agent ===
+cd agent || { echo "Каталог agent не найден!"; exit 1; }
+
+# === Извлечение версии из docker-compose.yml или .yaml ===
+if [ -f "docker-compose.yml" ]; then
+  VERSION=$(grep -oP '(?<=agent:)[^"]+' docker-compose.yml | tr -d ' :')
+elif [ -f "docker-compose.yaml" ]; then
+  VERSION=$(grep -oP '(?<=agent:)[^"]+' docker-compose.yaml | tr -d ' :')
+else
+  echo "Файл docker-compose не найден!"
+  exit 1
+fi
+
+# === Вывод версии и запуск Docker-команд ===
+echo "Используемая версия: $VERSION"
+
+# Фильтр изображений с нужной версией
+docker images --filter=reference="harbor.sbcommon.gibdev.net/sb/cfip/agent:$VERSION"
+
+# Запуск контейнера
+docker compose up -d agent
 
 echo "Скрипт успешно завершен."
