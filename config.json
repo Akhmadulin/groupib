@@ -1,4 +1,5 @@
 {
   "id": "example-org",
-  "password": "supersecret"
+  "password": "supersecret",
+  "bincodes": ["8600", "9860"]
 }
