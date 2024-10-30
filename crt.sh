@@ -17,28 +17,32 @@ if [ -z "$ORG_ID" ] || [ -z "$PASSWORD" ]; then
   exit 1
 fi
 
+# Создаём директорию certs, если она не существует
+CERTS_DIR="./certs"
+mkdir -p "$CERTS_DIR"
+
 # Генерация signing key
 echo "Генерация signing key..."
 openssl ecparam -name prime256v1 -genkey -noout | \
-openssl pkcs8 -topk8 -out ${ORG_ID}-signing.key -passout pass:${PASSWORD}
+openssl pkcs8 -topk8 -out ${CERTS_DIR}/${ORG_ID}-signing.key -passout pass:${PASSWORD}
 
 # Генерация encryption key
 echo "Генерация encryption key..."
 openssl ecparam -name prime256v1 -genkey -noout | \
-openssl pkcs8 -topk8 -out ${ORG_ID}-encryption.key -passout pass:${PASSWORD}
+openssl pkcs8 -topk8 -out ${CERTS_DIR}/${ORG_ID}-encryption.key -passout pass:${PASSWORD}
 
 # Генерация signing certificate
 echo "Генерация signing сертификата..."
 openssl req -new -x509 -days 1095 \
--key ${ORG_ID}-signing.key -passin pass:${PASSWORD} \
--out ${ORG_ID}-signing.crt \
+-key ${CERTS_DIR}/${ORG_ID}-signing.key -passin pass:${PASSWORD} \
+-out ${CERTS_DIR}/${ORG_ID}-signing.crt \
 -subj "/O=${ORG_ID}/CN=CFIP signing"
 
 # Генерация encryption certificate
 echo "Генерация encryption сертификата..."
 openssl req -new -x509 -days 1095 \
--key ${ORG_ID}-encryption.key -passin pass:${PASSWORD} \
--out ${ORG_ID}-encryption.crt \
+-key ${CERTS_DIR}/${ORG_ID}-encryption.key -passin pass:${PASSWORD} \
+-out ${CERTS_DIR}/${ORG_ID}-encryption.crt \
 -subj "/O=${ORG_ID}/CN=CFIP encryption"
 
-echo "Генерация завершена. Сертификаты и ключи созданы."
+echo "Генерация завершена. Сертификаты и ключи сохранены в папку ${CERTS_DIR}."
