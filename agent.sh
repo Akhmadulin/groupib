@@ -16,7 +16,7 @@ BINCODES=$(grep -oP '(?<="bincodes": \[)[^\]]*' $CONFIG_FILE | tr -d '"' | tr ',
 ORG_SALT=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16)
 
 # === Распаковка файлов ===
-for archive in agent.* agent-conf.*; do
+for archive in agent-conf.*; do
   if [[ -f $archive ]]; then
     case $archive in
       *.zip) unzip "$archive" ;;
@@ -27,8 +27,8 @@ for archive in agent.* agent-conf.*; do
 done
 
 # === Загрузка Docker-образа ===
-if [ -f "agent.tar" ]; then
-  docker load -i agent.tar
+if [ -f "agent.tar.gz" ]; then
+  docker load < agent.tar.gz
 else
   echo "Файл agent.tar не найден!"
   exit 1
@@ -53,7 +53,9 @@ fi
 sed -i \
   -e "s|<org>|$ORG_ID|g" \
   -e "s|<org-signing.key password>|$PASSWORD|g" \
+  -e "s|<org-signing.key secret>|$PASSWORD|g" \
   -e "s|<org-encryption.key secret>|$PASSWORD|g" \
+  -e "s|<group-encryption.key password>|$PASSWORD|g" \
   -e "s|<org secret salt>|$ORG_SALT|g" \
   "$PRIVATE_YAML"
 
