@@ -8,9 +8,9 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 # === Извлечение значений из config.json ===
-ORG_ID=$(grep -oP '(?<="id": ")[^"]*' "$CONFIG_FILE")
-PASSWORD=$(grep -oP '(?<="password": ")[^"]*' "$CONFIG_FILE")
-BINCODES=$(grep -oP '(?<="bincodes": \[)[^\]]*' "$CONFIG_FILE" | tr -d '"' | tr ',' ' ')
+ORG_ID=$(sed -n 's/.*"id": "\(.*\)".*/\1/p' "$CONFIG_FILE")
+PASSWORD=$(sed -n 's/.*"password": "\(.*\)".*/\1/p' "$CONFIG_FILE")
+BINCODES=$(sed -n 's/.*"bincodes": \[\([^]]*\)\].*/\1/p' "$CONFIG_FILE" | tr -d '"' | tr ',' ' ')
 
 # === Генерация случайной соли из 16 символов ===
 ORG_SALT=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16)
@@ -84,9 +84,9 @@ cd agent || { echo "Каталог agent не найден!"; exit 1; }
 
 # === Извлечение версии из docker-compose.yml или .yaml ===
 if [ -f "docker-compose.yml" ]; then
-  VERSION=$(grep -oP '(?<=agent:)[^"]+' docker-compose.yml | tr -d ' :')
+  VERSION=$(sed -n 's/.*agent:\(.*\)/\1/p' docker-compose.yml | tr -d ' :')
 elif [ -f "docker-compose.yaml" ]; then
-  VERSION=$(grep -oP '(?<=agent:)[^"]+' docker-compose.yaml | tr -d ' :')
+  VERSION=$(sed -n 's/.*agent:\(.*\)/\1/p' docker-compose.yaml | tr -d ' :')
 else
   echo "Файл docker-compose не найден!"
   exit 1
