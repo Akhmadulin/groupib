@@ -8,8 +8,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 # Извлечение значений id и password из конфигурационного файла
-ORG_ID=$(grep -oP '(?<="id": ")[^"]*' $CONFIG_FILE)
-PASSWORD=$(grep -oP '(?<="password": ")[^"]*' $CONFIG_FILE)
+ORG_ID=$(sed -n 's/.*"id": "\(.*\)".*/\1/p' "$CONFIG_FILE")
+PASSWORD=$(sed -n 's/.*"password": "\(.*\)".*/\1/p' "$CONFIG_FILE")
 
 # Проверяем, что id и пароль не пусты
 if [ -z "$ORG_ID" ] || [ -z "$PASSWORD" ]; then
