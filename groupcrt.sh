@@ -4,15 +4,31 @@
 ORG_NAME=$(jq -r '.id' config.json)
 PASSWORD=$(jq -r '.password' config.json)
 
-# Переменные (их можно изменить по мере необходимости)
-LEADER_CERT="${ORG_NAME}-leader-signing.crt" # Предполагаем, что сертификат лидера содержит идентификатор организации
-CMS_FILE="group_container.p7s" # Название полученного CMS-файла
-OUTPUT_CMS_DECRYPTED="group_container.p7e"
+# Определение CMS файла
+CMS_FILE=$(ls *.p7s 2>/dev/null | head -n 1)
+
+if [ -z "$CMS_FILE" ]; then
+    echo "Файл с расширением .p7s не найден." >&2
+    exit 1
+fi
+
+# Определение сертификата лидера в зависимости от имени файла CMS
+if [[ "$CMS_FILE" == group1* ]]; then
+    LEADER_CERT="IYB-signing.crt"
+elif [[ "$CMS_FILE" == group2* ]]; then
+    LEADER_CERT="BRB-signing.crt"
+else
+    echo "Неизвестный префикс для файла $CMS_FILE. Не удалось определить сертификат лидера." >&2
+    exit 1
+fi
+
+# Переменные для последующих шагов
+OUTPUT_CMS_DECRYPTED="${CMS_FILE%.p7s}.p7e"
 ORG_PRIVATE_KEY="${ORG_NAME}-encryption.key"
 GROUP_NAME="group_${ORG_NAME}" # Динамическое название группы на основе имени организации
 
 # Шаг 1: Проверка CMS-контейнера с использованием сертификата подписи лидера
-echo "Проверка CMS-контейнера с сертификатом подписи лидера..."
+echo "Проверка CMS-контейнера с сертификатом подписи лидера ($LEADER_CERT)..."
 openssl cms -verify -inform PEM -noverify \
     -signer "$LEADER_CERT" \
     -in "$CMS_FILE" \
